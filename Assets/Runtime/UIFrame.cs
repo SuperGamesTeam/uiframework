@@ -225,6 +225,24 @@ namespace deVoid.UIFramework
         public void UnregisterWindow<TWindow>(string screenId, TWindow controller) where TWindow : IWindowController {
             windowLayer.UnregisterScreen(screenId, controller);
         }
+        
+        /// <summary>
+        /// Unregisters the Screen.
+        /// </summary>
+        /// <param name="screenId">Screen identifier.</param>
+        /// <param name="controller">Controller.</param>
+        public void UnregisterScreen(string screenId, IUIScreenController controller)
+        {
+            switch (controller)
+            {
+                case IWindowController window:
+                    windowLayer.UnregisterScreen(screenId, window);
+                    return;
+                case IPanelController panel:
+                    panelLayer.UnregisterScreen(screenId, panel);
+                    break;
+            }
+        }
 
         /// <summary>
         /// Checks if a given Panel is open.
@@ -294,6 +312,14 @@ namespace deVoid.UIFramework
 
             type = null;
             return false;
+        }
+        
+        /// <summary>
+        /// Checks if any screen is registered to the Window layer and have IsPopup set to true
+        /// also ignore list can be passed
+        /// </summary>
+        public bool IsAnyPopupOpened() {
+            return windowLayer.IsAnyPopupOpened();
         }
 
         private void OnRequestScreenBlock() {
