@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using UnityEngine;
 
 namespace deVoid.UIFramework
@@ -66,7 +67,10 @@ namespace deVoid.UIFramework
 
         public override void HideScreen(IWindowController screen) {
             if (screen == CurrentWindow) {
-                windowHistory.Pop();
+                if (!screen.IgnoreHistory){
+                    windowHistory.Pop();
+                }
+
                 AddTransition(screen);
                 screen.Hide();
 
@@ -80,6 +84,11 @@ namespace deVoid.UIFramework
                 }
             }
             else {
+                if (screen.IgnoreHistory) {
+                    screen.Hide();
+                    return;
+                }
+
                 Debug.LogError(
                     string.Format(
                         "[WindowUILayer] Hide requested on WindowId {0} but that's not the currently open one ({1})! Ignoring request.",
@@ -108,6 +117,12 @@ namespace deVoid.UIFramework
             }
 
             base.ReparentScreen(controller, screenTransform);
+        }
+        
+        public bool IsAnyPopupOpened(IList<IWindowController> ignoreList = null) {
+            return ignoreList == null ? 
+                registeredScreens.Any(x => x.Value.IsPopup && x.Value.IsVisible) : 
+                registeredScreens.Any(x => !ignoreList.Contains(x.Value) && x.Value.IsPopup && x.Value.IsVisible);
         }
 
         private void EnqueueWindow<TProp>(IWindowController screen, TProp properties) where TProp : IScreenProperties {
@@ -164,7 +179,10 @@ namespace deVoid.UIFramework
                 CurrentWindow.Hide();
             }
 
-            windowHistory.Push(windowEntry);
+            if (!windowEntry.Screen.IgnoreHistory) {
+                windowHistory.Push(windowEntry);
+            }
+
             AddTransition(windowEntry.Screen);
 
             if (windowEntry.Screen.IsPopup) {
