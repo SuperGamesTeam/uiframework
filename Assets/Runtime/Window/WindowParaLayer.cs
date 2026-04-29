@@ -12,6 +12,7 @@ namespace deVoid.UIFramework {
         [SerializeField] private float _appearDarkenBgDuration = 0.4f;
         private CanvasGroup _darkenBgCanvasGroup;
         private Coroutine _activeRoutine;
+        private bool _isShown;
 
         private List<GameObject> containedScreens = new List<GameObject>();
         
@@ -26,11 +27,9 @@ namespace deVoid.UIFramework {
 
         public void RefreshDarken() {
             for (int i = 0; i < containedScreens.Count; i++) {
-                if (containedScreens[i] != null) {
-                    if (containedScreens[i].activeSelf) {
-                        ShowDarkenBg();
-                        return;
-                    }
+                if (containedScreens[i] != null && containedScreens[i].activeSelf) {
+                    ShowDarkenBg();
+                    return;
                 }
             }
 
@@ -40,13 +39,40 @@ namespace deVoid.UIFramework {
         public void DarkenBG() => ShowDarkenBg();
         
         private void ShowDarkenBg() {
+            if (_isShown) {
+                RepositionDarkenBg();
+                return;
+            }
+
+            _isShown = true;
             StopActiveDarkenBgRoutine();
             darkenBgObject.SetActive(true);
-            darkenBgObject.transform.SetAsFirstSibling();
+            RepositionDarkenBg();
             _activeRoutine = StartCoroutine(FadeInDarkenBgCoroutine());
         }
 
+        private void RepositionDarkenBg() {
+            // Find the last active contained screen and place darkenBg right before it
+            GameObject lastActive = null;
+            for (int i = containedScreens.Count - 1; i >= 0; i--) {
+                if (containedScreens[i] != null && containedScreens[i].activeSelf) {
+                    lastActive = containedScreens[i];
+                    break;
+                }
+            }
+
+            if (lastActive != null) {
+                int targetIndex = lastActive.transform.GetSiblingIndex();
+                darkenBgObject.transform.SetSiblingIndex(targetIndex);
+            } else {
+                darkenBgObject.transform.SetAsFirstSibling();
+            }
+        }
+
         private void HideDarkenBg() {
+            if (!_isShown) return;
+
+            _isShown = false;
             StopActiveDarkenBgRoutine();
             _activeRoutine = StartCoroutine(FadeOutDarkenBgCoroutine());
         }
