@@ -63,10 +63,15 @@ namespace deVoid.UIFramework {
 
             if (lastActive != null) {
                 int targetIndex = lastActive.transform.GetSiblingIndex();
+                // When darkenBg is already before the target, removing it shifts the target
+                // down by one, so we must account for that to avoid landing in front of it.
+                if (darkenBgObject.transform.GetSiblingIndex() < targetIndex) {
+                    targetIndex--;
+                }
                 darkenBgObject.transform.SetSiblingIndex(targetIndex);
-            } else {
-                darkenBgObject.transform.SetAsFirstSibling();
             }
+            // When no active screen exists (transition in progress), leave darkenBg in place —
+            // the incoming screen will trigger a reposition once it becomes active.
         }
 
         private void HideDarkenBg() {
